@@ -149,7 +149,7 @@ async function findSteps(scheme_id) {
   return rows;
 }
 
-async function add(scheme) {
+ function add(scheme) {
   // EXERCISE D
   /*
     1D- This function creates a new scheme and resolves to _the newly created scheme_.
