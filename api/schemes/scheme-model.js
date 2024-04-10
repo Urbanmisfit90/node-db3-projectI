@@ -92,30 +92,35 @@ async function findById(scheme_id) {
         "steps": []
       }
   */
-  const rows = await db("schemes as sc")
-    .leftJoin("steps as st", "sc.scheme_id", "st.scheme_id")
-    .where("sc.scheme_id", scheme_id)
-    .select("st.*", "sc.scheme_name", "st.scheme_id")
-    .orderBy("st.step_number");
-
-  const result = {
-    scheme_id: scheme_id,
-    scheme_name: rows.length > 0 ? rows[0].scheme_name : "No Scheme Found",
-    steps: [],
-  };
-
-  rows.forEach((row) => {
-    if (row.step_id) {
-      result.steps.push({
-        step_id: row.step_id,
-        step_number: row.step_number,
-        instructions: row.instructions,
-      });
+      const rows = await db("schemes as sc")
+      .leftJoin("steps as st", "sc.scheme_id", "st.scheme_id")
+      .where("sc.scheme_id", scheme_id)
+      .select("st.*", "sc.scheme_name", "st.scheme_id")
+      .orderBy("st.step_number");
+  
+    const result = {
+      scheme_id: scheme_id,
+      scheme_name: rows.length > 0 ? rows[0].scheme_name : "No Scheme Found",
+      steps: [],
+    };
+  
+    rows.forEach((row) => {
+      if (row.step_id) {
+        result.steps.push({
+          step_id: row.step_id,
+          step_number: row.step_number,
+          instructions: row.instructions,
+        });
+      }
+    });
+  
+    // Check if the scheme_id matches the expected scheme_id
+    if (result.scheme_id !== scheme_id) {
+      throw new Error(`Incorrect scheme_id returned. Expected: ${scheme_id}, Actual: ${result.scheme_id}`);
     }
-  });
-
-  return result;
-}
+  
+    return result;
+  }
 
 async function findSteps(scheme_id) {
   // EXERCISE C
@@ -167,17 +172,22 @@ function addStep(scheme_id, step) {
     and resolves to _all the steps_ belonging to the given `scheme_id`,
     including the newly created one.
   */
- return db('steps').insert({
-  ...step,
-  scheme_id
- })
- .then(() => {
-  return db('steps as st')
-  .join('schemes as sc', 'sc.scheme_id', 'st.scheme_id')
-  .select('step_id', 'step_number', 'instructions', 'scheme_name')
-  .orderBy('step_number')
-  .where('scheme_id', scheme_id)
- })
+    return db('steps')
+    .insert({
+      ...step,
+      scheme_id
+    })
+    .then(() => {
+      // Retrieve all steps for the given scheme_id, including the newly created one, and return a promise
+      return db('steps as st')
+        .join('schemes as sc', 'sc.scheme_id', 'st.scheme_id')
+        .select('st.step_id', 'st.step_number', 'st.instructions', 'sc.scheme_name')
+        .orderBy('st.step_number')
+        .where('st.scheme_id', scheme_id);
+    })
+    .catch((error) => {
+      throw error; // Re-throw the error for centralized error handling
+    });
 }
 
 module.exports = {

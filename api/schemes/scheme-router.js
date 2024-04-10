@@ -57,8 +57,10 @@ router.get('/:scheme_id', checkSchemeId, (req, res, next) => {
 
   Schemes.findById(scheme_id)
     .then(scheme => {
+      scheme.scheme_id = parseInt(scheme.scheme_id)
       res.json(scheme)
-    })
+      console.log(scheme)
+    }) 
     .catch(next)
 })
 
